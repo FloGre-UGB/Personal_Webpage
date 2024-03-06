@@ -1,0 +1,4 @@
+- source: project
+  quarto-pub:
+    - id: 77bce2cb-eef2-4b0b-8056-887c5eacc224
+      url: 'https://florian-greindl.quarto.pub/florian-greindl'

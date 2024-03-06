@@ -1,0 +1,14 @@
+---
+title: "Contact"
+about:
+  id: contact
+  template: solana
+---
+
+| Florian Greindl
+| Department of Economics
+| University of Regensburg
+| Universitätsstr. 31
+| D-93053 Regensburg
+| Germany
+| 

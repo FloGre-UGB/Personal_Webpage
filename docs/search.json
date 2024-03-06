@@ -14,10 +14,17 @@
     "text": "Project 3"
   },
   {
+    "objectID": "contact.html",
+    "href": "contact.html",
+    "title": "Contact",
+    "section": "",
+    "text": "Florian Greindl\nDepartment of Economics\nUniversity of Regensburg\nUniversitätsstr. 31\nD-93053 Regensburg\nGermany"
+  },
+  {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "About Me",
+    "title": "Welcome…",
     "section": "",
-    "text": "Thanks for checking out my web site!"
+    "text": "…to my website, which is of no use to anyone (except me, who’s trying to make a website)."
   }
 ]
