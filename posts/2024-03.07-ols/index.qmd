@@ -1,0 +1,69 @@
+---
+title: "Some Thoughts on Linear Regression and OLS"
+description: "A post that tries to wrap up stuff I know about OLS in a concise way"
+author:
+  - name: Florian Greindl
+    url: https://florian-greindl.quarto.pub/
+date: 10-24-2022
+categories: [Econometrics] # self-defined categories
+bibliography: citations.bib
+draft: true # setting this to `true` will prevent your post from appearing on your listing page until you're ready!
+---
+
+*Inspired by a course on Advanced Econometrics organized by the BGPE and taught by Jeffrey Wooldridge (Michigan State University) I decided to wrap up some basic knowledge on Econometrics that I have gathered over the course of my studies. The material presented is primarily based on unpublished lecture notes by Jeff Wooldridge, Wooldridge's book "Introductory Econometrics"* [@wooldridge2009introductory] *and lecture notes by Rolf Tschernig (University of Regensburg)* [@tschernigkursmaterial]*.*
+
+One might claim that there's not much to say about linear regression and OLS. Nevertheless, I decided to write a post about these topics. In my experience we tend to view "beginner's" material as straightforward and not worth thinking about. This includes myself. This post can be viewed as an attempt to prove myself wrong.
+
+## Motivation for OLS
+
+Let us assume that we want to understand how a bunch of explanatory variables $x_1$ to $x_p$ influence an outcome variable $y$ in a population. Our objective is to make a good guess about $y$ if someone tells us the values of the explanatory variables for an individual $i$ in the population. A "good" guess might be the conditional expected value $$E(y_i|x_{i1},\dots,x_{pi}).$$While this is intuitively clear, we should remind ourselves which notion of good implies this choice.
+
+### Minimum Mean Square Error Predictor
+
+Let's take a step back and think about estimation in a more general setting. Assume we have a random variable $$x:\Omega \rightarrow \mathbb{R}^n$$with probability density function $p^x$. In order to choose a good estimator for $x$ we define a cost-function, i.e. a function that penalizes the estimates deviation from the true $x$. More precisely, we
+
+-   define a cost-function $$c: \mathbb{R}^n \times \mathbb{R}^n  \rightarrow \mathbb{R}$$ and
+
+-   pick an estimate $\hat{x}$ such that the expected cost is minimized, i.e. $\hat{x}$ minimizes $E(c(x, \hat{x}))$.
+
+Let's look at the cost function $$c(x,\hat{x})=\|x-\hat{x}\|^2.$$ Then the **mean squared error (MSE)** is the expected cost given this cost function, i.e. $$E(\|x-\hat{x}\|^2)=\int_\Omega \|x-\hat{x}\|^2 p^x(x) dx.$$
+
+Now, let's try to find the minimizer of this expression, i.e. $\hat{x}$ such that $E(\|x-\hat{x}\|^2)$ is minimal . We have $$E(\|x-\hat{x}\|^2) = E(||x||^2)-2\hat{x}^T E(x) + \hat{x}^T\hat{x},$$ where we use that we can write $$c(x,\hat{x})=\|x-\hat{x}\|^2=(x-\hat{x})^T (x-\hat{x}).$$
+
+Note, that we have to assume that $E(||x||^2)<\infty$. Now, we differentiate with respect to $\hat{x}$ (one is often somewhat sloppy when it comes to this part of the argument, by simply assuming differentiability). Obviously the first term $E(||x||^2)$ vanishes when we differentiate with respect to $\hat{x}$. Next, let us consider the third term and recap some multivariate calculus.
+
+#### **Some multivariate calculus**
+
+Let us consider a billinear form $\beta:Y_1\times Y_2 \rightarrow Z$ where $Y_1,Y_2,Z$ are finite-dimensional normed vector spaces. Such a bilinear form is continuously differentiable and its derivative is $$D\beta(a_1,a_2)(h_1,h_2)=\beta(h_1,a_2)+\beta(a_1,h_2).$$ This looks somehwat complicated, so let's recall what a derivative actually is. One can define the mapping $D\beta:Y_1\times Y_2\rightarrow \mathcal{L}(Y_1\times Y_2, Z)$ where $\mathcal{L}(Y_1\times Y_2,Z)$ denotes the space of linear maps between $Y_1\times Y_2$ and $Z$. This means: by choosing a point to differentiate at $(a_1,a_2)$ we produce a linear map $Y_1\times Y_2 \rightarrow Z$, which takes vectors in $(h_1,h_2)$ in $Y_1\times Y_2$ as input.
+
+#### Back to "Reality"
+
+So what does this unnecessarily general result for bilinear form imply for the term $\hat{x}^T \hat{x},$ which we want to differentiate with respect to $\hat{x}.$ In our context $$\beta=\langle\cdot, -\rangle:\mathbb{R}^n \times \mathbb{R}^n \rightarrow \mathbb{R}.$$ By the fore mentioned result we know that $$D\beta(\eta, \xi)(-,\cdot) = \langle\eta, \cdot\rangle + \langle -, \xi\rangle.$$ Thus, $$D\beta(\hat{x},\hat{x})(-,\cdot)= \hat{x}^T \cdot + -^T \hat{x} = 2 x^T (\cdot + -),$$ where we use symmetry and linearity in the second component. To put it less confusingly $D\beta(\hat{x},\hat{x})=2\hat{x}^T=2\hat{x},$ where the equality holds in $\mathcal{L}(Y_1\times Y_2,Z)$. In order to differentiate the second term we trust in mathematics and assume that everything works as we would expect it to work. Thus, we get $E(x)$ as the derivative of $\hat{x}^T E(x)$ with respect to $\hat{x}$ and we get $$\frac{d}{d\hat{x}} E(\|x-\hat{x}\|^2)= -2E(x)+ 2x^T.$$
+
+Setting this to zero and rearranging yields $$\hat{x}=E(x),$$ which implies that the minimum mean square error predictor for $x$ is $E(x)$.
+
+### Back to the conditional expected value
+
+Let's return to our actual topic, OLS. In the previous paragraph we saw that the idea of minimizing the mean squared error of our prediction leads us to considering estimating the conditional expectation $E(y\mid x_1,\dots, x_p)$. But wait, I haven't talked about conditional expectations in the previous paragraph. First of all, I should admit that my notation in the previous paragraph sucks as it is somewhat misleading. In our context we want to estimate $y_i$ based on information about the explanatory variables $x_1,\dots, x_p$ . As we have this additional information we seek to find the estimator that minimizes the conditional MSE $$E(||y-\hat{y}||^2|x_{i1},\dots,x_{ip})=E(||y_i||^2|\cdot)-2 E(y_i|\cdot)\hat{y}+\hat{y}^2.$$ By taking the derivative wrt $\hat{y}$ and setting the result to zero we get $$\hat{y}= E(y_i|x_{i1},\dots, x_{i_p}),$$
+
+and we see that the conditional expected value is the minimum mean square error predictor for $y_i$ if we have information on the explanatory variables.\
+
+### Modeling the conditional expected value
+
+In many textbooks, one would now continue with the assumption that $$E(y|x_1,\dots,x_p)=\beta_0+\beta_1 x_1+\dots+\beta_px_p.$$Then, one would show that (under appropriate assumptions) OLS estimates the $\beta$'s consistently. However, $E(y|x_1,\dots,x_p)=\beta_0+\beta_1 x_1+\dots+\beta_px_p$ is a fairly strong assumption (even if we allow for the $x$'s to be transformations of variables). Why is this a strong assumption? Because we assume **linearity in the parameters**. Yes, you've just witnessed me dropping this phrase. But, what does this actually mean? Let's use matrix notation to reduce writing effort (and have an expression that feels more like **linear** algebra): $$E(y|x)=x^T\beta$$ Now, linearity in the parameters just means that $$E(y|X)=L(X)\beta,$$ and $L(X):\mathbb{R}^p\rightarrow \mathbb{R}, \beta \mapsto X\beta$ is a linear map. People justifiably claim that this is not the case in many contexts. Nevertheless, even if we assume that our model for $E(y|x_1,\dots,x_p)$ is not true, OLS can still deliver interesting results.
+
+#### Linear Projections
+
+Let us assume that $E(y|x_1,\dots,x_p)=\mu(x),$ where $\mu$ can basically be anything. We have seen that $\mu(x)$ is the predictor that minimizes the mean squared error, i.e. $$\mu(x)=\text{argmin}_{m\in \mathcal{L}_2} E((y-m(x))^2).$$Now, if we have no further information on $\mu$ it might be quite hard to estimate it. Instead we can try to find a linear approximation to $y$ that uses the information we have, i.e. $x$. A linear approximation using information on $x$ of $y$ has the following form: $$\hat{y}=b_0+b_1x_1+\dots+b_px_p,$$ where $b_0,\dots,b_p\in \mathbb{R}$. As before we want to find the linear approximation that minimizes the mean squared prediction error $$E((y-b_0+b_1x_1+\dots+b_px_p)^2)=E((y-xb)), x=(1,x_1,\dots,x_p),$$ i.e. we find $b=(b_0,\dots,b_p)^T$ for which this expression is minimized (note: for $E((y-xb)^2)$ to be defined $E(x_j^2)<\infty$ must hold for $j=1,\dots,p$). Let's rearrange $$E((y-xb)^2)=E(y^2(-2E(yx)b+E((xb)^2 )$$ and take the derivative with respect to $b$: $$\frac{d}{db} E((y-xb)^2)=-2E(yx)+2(E(x_1x),\dots,E(x_px))^T b$$ Coming up with the last term is actually not straightforwards. Let's recall what $E((xb)^2)$ actually is: $$E((xb)^2)=\int_{\mathbb{R}^p} (xb)^2 p_{x_1,\dots,x_p}(x_1,\dots,x_p)dx_1\dots dx_p$$ Let's consider $j\in \{0,\dots,p\}$ If everything goes sufficiently "smoothly" (actually in a mathematical sense) one can exchange integration and derivation, i.e. $$\frac{\partial}{\partial b_j} E((b_0+b_1x_1+\dots+b_px_p)^2)= \int_{\mathbb{R}^p}\frac{\partial}{\partial b_j}(b_0+b_1x_1+\dots+b_px_p)^2 p(x)dx_1\dots dx_p =\\\int_{\mathbb{R}^p} 2(b_0+b_1x_1+\dots+b_px_p)x_jp(x)dx_1\dots dx_p=2E((b_0+b_1x_1+\dots +b_px_p)x_j),$$
+
+with $x_j=0$. Here we actually use that $xbx_j$ is bounded, which is related to the (co)variances of the $x$'s. Generally speaking, this is one of these steps, where we just hope that everything behaves nicely. As I'm not an expert on stochastic calculus there might be results that guarantee that this actually works nicely in any case.
+
+Now, we can set $$\frac{d}{db} E((y-xb)^2)=0.$$ If we assume that the matrix $E(x^tx)$ is invertible we can solve for $b$ and get $$\beta:=\hat{b}=E(x^T x))^{-1}E(yx).$$ Then, the linear projection of $y$ on the space spanned by $(1,x_1,\dots,x_p)$ is $$L(y|1,x_1,\dots,x_p)=x\beta.$$
+
+The folowing is an interesting result: $x\beta$ is the linear projection of $y$ on $(1,x_1,\dots,x_p)$ if and only if we can write $$y=x\beta+u,$$ where the error term $u$ has "good" stochastic properties ($E(u)=0, Cov(x_j,u)=0$). Let us show at least one direction:
+
+Assume that $$x\beta=\text{argmin}_{b\in \mathbb{R}^{p+1}}=E((y-xb)^2).$$ Then, $$0=\frac{\partial}{\partial b_j} E((y-x\beta)=-2E((y-x\beta)x_j)=-2E(ux_j)$$ for $j\in \{0,\dots,p\}$. Recall that $x_0=1$. Hence, $E(u)=0$ and $E(ux_j)=0$, which also implies $Cov(x_j,u)=0$. To me this is quite surprising, as we get $E(u)=0$ without having to assume it.
+
+Furthermore, the linear projection is the minimum MSE linear approximation to the conditional expectation function $\mu(x)$. Hence, we could use our usual optimization toolkit to see that the linear projection is $$\text{argmin}_{b} E[(\mu(x)-xb)^2].$$ It follows directly that, if $\mu(x)$ is linear, i.e. $\mu(x)=xa$ for $a\in\mathbb{R}^{p+1}$, then the linear projection is the conditional expectation function.
+
+The upshot of this discussion is: Instead of assuming $$E(y|x_1,\dots,x_p)=\beta_0+\beta_1 x_1+\dots+\beta_px_p$$we can just admit that the conditional expectation of $y$ is maybe more complicated and claim that we only estimate its linear approximation.

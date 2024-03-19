@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Florian Greindl">
+<meta name="dcterms.date" content="2025-06-03">
+<meta name="description" content="A post that tries to wrap up stuff I know about neural networks in a concise way">
+
+<title>Florian Greindl - Some Thoughts on Linear Regression and OLS</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+  MathJax = {
+    tex: {
+      tags: 'ams'  // should be 'ams', 'none', or 'all'
+    }
+  };
+</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Florian Greindl</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html" rel="" target="">
+ <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../contact.html" rel="" target="">
+ <span class="menu-text">Contact</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts.html" rel="" target="">
+ <span class="menu-text">My Blog</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools ms-auto">
+    <a href="https://github.com/FloGre-UGB" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#structure-of-an-artificial-neural-network-nn" id="toc-structure-of-an-artificial-neural-network-nn" class="nav-link active" data-scroll-target="#structure-of-an-artificial-neural-network-nn">Structure of an artificial neural network (NN)</a></li>
+  <li><a href="#evaluating-our-predictions" id="toc-evaluating-our-predictions" class="nav-link" data-scroll-target="#evaluating-our-predictions">Evaluating our Predictions</a></li>
+  <li><a href="#stochastic-gradient" id="toc-stochastic-gradient" class="nav-link" data-scroll-target="#stochastic-gradient">Stochastic Gradient</a>
+  <ul class="collapse">
+  <li><a href="#choosing-a-direction" id="toc-choosing-a-direction" class="nav-link" data-scroll-target="#choosing-a-direction">Choosing a direction</a></li>
+  <li><a href="#choosing-a-direction-stochastically" id="toc-choosing-a-direction-stochastically" class="nav-link" data-scroll-target="#choosing-a-direction-stochastically">Choosing a Direction “stochastically”</a></li>
+  </ul></li>
+  <li><a href="#back-propagation" id="toc-back-propagation" class="nav-link" data-scroll-target="#back-propagation">Back propagation</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Some Thoughts on Linear Regression and OLS</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Machine Learning</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    A post that tries to wrap up stuff I know about neural networks in a concise way
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p><a href="https://florian-greindl.quarto.pub/">Florian Greindl</a> </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 3, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p><em>The presented content is primarily based on a paper by Catherine F. Higham and Desmond J. Higham <span class="citation" data-cites="higham2018deep">(<a href="#ref-higham2018deep" role="doc-biblioref">Higham and Higham 2018</a>)</span>, which presents a concise introduction to neural networks addressed at applied mathematicians.</em></p>
+<section id="structure-of-an-artificial-neural-network-nn" class="level2">
+<h2 class="anchored" data-anchor-id="structure-of-an-artificial-neural-network-nn">Structure of an artificial neural network (NN)</h2>
+<p>An artificial NN consists of several layers. We denote the number of layers <span class="math inline">\(L\)</span>. Each layer consists of neurons. We write <span class="math inline">\(n_l\)</span> for the number of neurons in layer <span class="math inline">\(l\in \{1,\dots,L\}\)</span>. The “state” of a neuron is given by its <em>activation</em>, which is a real number between <span class="math inline">\(0\)</span> and <span class="math inline">\(1\)</span>. We denote the activation of neuron <span class="math inline">\(i\in \{1,\dots, n_l\}\)</span> in layer <span class="math inline">\(l\)</span> with <span class="math inline">\(a^{[l]}_i\in [0,1]\)</span>. How is the activation of a neuron determined? Given some input <span class="math inline">\(z\in\mathbb{R}\)</span> we can feed <span class="math inline">\(z\)</span> into a function <span class="math inline">\(\sigma\)</span> that maps <span class="math inline">\(z\)</span> to a number between 0 and 1. Traditionally a popular choice for <span class="math inline">\(\sigma\)</span> has been <span class="math display">\[\sigma(z)=(1+\exp(-z))^{-1},\]</span> which has some desireable properties:</p>
+<ul>
+<li><p>its derivative is easy to calculate as we have <span class="math display">\[\sigma'(z)=\sigma(z)(1-\sigma(z))\]</span></p></li>
+<li><p>and it is strictly increasing in <span class="math inline">\(z\)</span> and its first derivative is largest at <span class="math inline">\(0\)</span>.</p></li>
+</ul>
+<div class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympy <span class="im">import</span> symbols, exp, plot_parametric</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympy.plotting <span class="im">import</span> plot</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> symbols(<span class="st">"z"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> plot_parametric((z,<span class="dv">1</span><span class="op">/</span>(<span class="dv">1</span><span class="op">+</span>exp((<span class="op">-</span>z)))), (z,<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>), label <span class="op">=</span> <span class="vs">r'$\sigma(z) =(1-\exp(-z))^{-1}$'</span>, legend <span class="op">=</span> <span class="va">True</span>, xlabel <span class="op">=</span> <span class="st">"z"</span>, ylabel<span class="op">=</span><span class="st">"y"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-2-output-1.png" width="662" height="466"></p>
+</div>
+</div>
+<p>Now, let <span class="math inline">\(l\in\{1,\dots,L-1\}\)</span> and assume we feed an observation into the neural network. We consider how the layers <span class="math inline">\(l\)</span> and <span class="math inline">\(l+1\)</span> of a NN are interconnected. The <span class="math inline">\(i\)</span>th neuron in layer <span class="math inline">\(l+1\)</span> is “wired” with every neuron of the previous layer, i.e.&nbsp;it takes the activations <span class="math inline">\(a^{[l]}_1,\dots, a^{[l]}_{n_l}\)</span> as input. Then a weighted sum <span class="math display">\[\sum_{j=1}^{n_l}w^{[l+1]}_{ij}a_j^{[l]}\]</span> of these inputs is calculated to which we add a bias <span class="math inline">\(b_i^{[l]}\)</span>. We write <span class="math display">\[z_j^{[l+1]}=\sum_{j=1}^{n_l}w^{[l+1]}_{ij}a_j^{[l]}+b_i^{[l+1]}\]</span> for <span class="math inline">\(l\in\{1,\dots,L-1\}\)</span>. To determine the activation of the neuron we calculate <span class="math inline">\(\sigma(z_j^{[l]})\in[0,1]\)</span>, which gives us <span class="math inline">\(a_j^{[l]}\)</span> . We do this for every neuron in layer <span class="math inline">\(l\)</span>. Hence, we can collect the weights into a <span class="math inline">\(n_{l+1}\times n_l\)</span> matrix <span class="math inline">\(W^{[l+1]}\)</span>. The shape stems from the fact that (a) the input each neuron takes are <span class="math inline">\(n_l\)</span> real numbers between 0 and 1 and (b) we have <span class="math inline">\(n_{l+1}\)</span> neurons in layer <span class="math inline">\(l+1\)</span> that accept these inputs. Analogously we write <span class="math inline">\(b^{[l+1]}\in\mathbb{R}^{n_{l+1}}\)</span> for the vector of biases. The entry <span class="math inline">\(w^{[l+1]}_{ij}\)</span> determines how much neuron <span class="math inline">\(j\)</span> in layer <span class="math inline">\(l\)</span> influences neuron <span class="math inline">\(i\)</span> in layer <span class="math inline">\(l+1\)</span>. We write <span class="math display">\[z^{[l+1]}=W^{[l+1]}a^{[l]}+b^{[l]}\]</span> and</p>
+<p><span class="math display">\[a^{[l+1]}=\sigma(z^{[l+1]})=(\sigma(z_j^{[l]}))_{j=1,\dots,n_l}\]</span> for the activations in layer <span class="math inline">\(l\)</span></p>
+<p>There are two distinct layers, the first and the last one. The first layer aka the initial layer is fed with observed data. The final layer is the layer that gives us predictions. Let us consider the standard example of classifying hand-written digits. We assume that we have grey-scale pictures as input. Each pixel’s coloring can be represented by a number between 0 and 1. The number of pixels of each picture gives us the number of neurons <span class="math inline">\(n_1\)</span> in the first layer. The intitial layer neurons’ activations are given by its grey scale value. We want the final layer to predict which digit was on the image fed into the NN. Hence, we have <span class="math inline">\(n_L=10\)</span>, where each neuron represents a digit. Our prediction is given by the neuron with the highest activation.</p>
+<p>We can interpret a NN as a function <span class="math display">\[F:\mathbb{R}^{n_1}\rightarrow\mathbb{R}^{n_L},\]</span> which takes vectors <span class="math inline">\((x_1,\dots,x_{n_1})\)</span> as input and puts out a vector of activations <span class="math inline">\((a^{[L]}_1,\dots,a^{[L]}_{n_L})\)</span>. The function <span class="math inline">\(F\)</span> itself is determined by the weights and biases on each layer.</p>
+<p>Let us consider a neural network with 4 layers and <span class="math inline">\(n_1=2, n_2=2, n_3=3, n_4=2\)</span>. Then <span class="math inline">\(W^{[2]}\)</span> is a <span class="math inline">\(2\times 2\)</span> , <span class="math inline">\(W^{[3]}\)</span> a <span class="math inline">\(3\times 2\)</span> and <span class="math inline">\(W^{[4]}\)</span> a <span class="math inline">\(2\times 3\)</span> matrix. Thus, we have 16 weights. Additionally, we have <span class="math inline">\(2+3+2=7\)</span> biases. Hence, by choosing <span class="math inline">\(16+7=23\)</span> parameters we define a function <span class="math inline">\(F:\mathbb{R}^2\rightarrow \mathbb{R}^2.\)</span> Training this NN basically means adjusting these 23 parameters such that a cost function is minimized. It is already somewhat clear that it’s not gonna be an easy task to find optimal even for this baby NN.</p>
+<p>To sum up this paragraph we provide pseudo-code that describes how an observation <span class="math inline">\(x\in\mathbb{R}^{n_1}\)</span> is processed by the NN:</p>
+<pre class="pseudo"><code>a = x
+for k in 2 to L:
+  z = W_k*a + b_k
+  a = sigma(z)</code></pre>
+</section>
+<section id="evaluating-our-predictions" class="level2">
+<h2 class="anchored" data-anchor-id="evaluating-our-predictions">Evaluating our Predictions</h2>
+<p>Let us assume we want to classify observations into categories based on <span class="math inline">\(n_1\)</span> observable characteristics. Let <span class="math inline">\(N\)</span> be the number of observations in our labeled training data. Let’s assume we have already chosen weights and biases within our NN. Then, we can feed the observations into the calibrated NN. For every observation <span class="math inline">\(x^{\{i\}}\)</span> the NN puts out an <span class="math inline">\(n_L\)</span> dimensional vector representing the activations of the neurons in the final layer. As mentioned before, each neuron in the final layer represents a category. For every observation we know its category. Let us assume observation <span class="math inline">\(i\)</span> belongs to category <span class="math inline">\(j\in\{1,\dots,n_L\}\)</span>. In an ideal world our NN’s output is <span class="math inline">\(F(x^{\{i\}})=\delta_{ij}\)</span> (Kronecker-delta), i.e.&nbsp;the activation of neuron <span class="math inline">\(j\)</span> is 1, whilst the activations of the other neurons are 0. We can quantify our NNs deviation form the perfect classifier by calculating <span class="math display">\[C_i=\frac{1}{2}||y^{\{i\}}-F(x^{\{i\}})||_2^2\]</span> for each <span class="math inline">\(i\in \{1,\dots,N\}\)</span> and computing <span class="math display">\[N^{-1}\sum_{i=1}^N C_i.\]</span> This defines our cost function. As this sum depends on the underlying parameters of <span class="math inline">\(F\)</span>, which we denote (for the sake of compactness) with <span class="math inline">\(p\)</span>, we can write <span class="math display">\[Cost(p)=N^{-1}\sum_{i=1}^N C_i(p).\]</span> Our objective is to find parameters <span class="math inline">\(p\)</span> such that this sum is minimal.</p>
+<p>We continue the pseudo-code example:</p>
+<pre class="pseudo"><code>Cost = 0
+for i in 1 to N:
+  a = x _i
+  y = y_i
+  # feed observation to neural net
+  for k in 2 to L: 
+    z = W_k*a + b_k 
+    a = sigma(z)
+  C_i = 0.5 * sqrt((y[1]-a[1])^2+...+(y[n_L]-a[n_l])^2  
+  Cost = Cost + (1/N) *C_i</code></pre>
+</section>
+<section id="stochastic-gradient" class="level2">
+<h2 class="anchored" data-anchor-id="stochastic-gradient">Stochastic Gradient</h2>
+<section id="choosing-a-direction" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-a-direction">Choosing a direction</h3>
+<p>Let us assume we have started with an initial calibration of our NN. The calibration is given by the parameter vector <span class="math inline">\(p\in\mathbb{R}^s\)</span>. Based on this we have calculated <span class="math inline">\(Cost(p)\)</span>. Now, we try to change the parameters by <span class="math inline">\(\Delta p\)</span> such that <span class="math inline">\(Cost(p+\Delta p)&lt; Cost(p)\)</span>. Geometrically speaking, we want to find the fastest way downhill in a <span class="math inline">\(s+1\)</span> dimensional mountain range. From multivariate calculus we know that <span class="math display">\[Cost(p+\Delta p)\approx Cost(p)+(\nabla Cost(p),\Delta p)_2\]</span> close to <span class="math inline">\(p\)</span> (first-order Taylor approximation). One might also recall that <span class="math inline">\(\nabla Cost(p)\)</span> gives us the direction of the steepest ascent. Hence, we decide to go into the opposite direction, i.e.&nbsp;we choose <span class="math inline">\(\Delta p=-\nabla Cost(p)\)</span>. As the Taylor formula gives only valid approximations close to <span class="math inline">\(p\)</span> we should not walk to far, i.e.&nbsp;we fix a scalar <span class="math inline">\(\eta\)</span> that we premultiply <span class="math inline">\(\Delta p\)</span> with. Hence, we update <span class="math inline">\(p\)</span> as follows: <span class="math display">\[p\rightarrow p-\eta \nabla Cost(p)\]</span> We do this until a stopping criterion is met.</p>
+</section>
+<section id="choosing-a-direction-stochastically" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-a-direction-stochastically">Choosing a Direction “stochastically”</h3>
+<p>Remember that <span class="math display">\[Cost(p)=N^{-1}\sum_{i=1}^N C_i(p).\]</span> Hence, <span class="math display">\[\nabla Cost(p)=N^{-1}\sum_{i=1}^N \nabla C_i(p).\]</span> To calculate <span class="math inline">\(\nabla Cost(p)\)</span> once we have to calculate <span class="math inline">\(s\)</span> (remember that <span class="math inline">\(p\in\mathbb{R}^s\)</span>) partial derivatives <span class="math inline">\(N\)</span> times. We have seen before that <span class="math inline">\(s\)</span> is large even for a baby NN. Thus, calculationg <span class="math inline">\(\nabla Cost(p)\)</span> can be computationally costly. Consequently, we might only consider a subset of our training data in determining the next direction we walk to. For the sake of simplicity we pick only one observation <span class="math inline">\(i\)</span> randomly, calculate <span class="math inline">\(\nabla C_i(p)\)</span> and walk into this direction. A single step can be summarized as</p>
+<ol type="1">
+<li><p>Choose <span class="math inline">\(i\in \{1,\dots,N\}\)</span> randomly.</p></li>
+<li><p>Update <span class="math inline">\(p\rightarrow p-\eta \nabla C_i(p)\)</span>.</p></li>
+</ol>
+<p>We call this the <em>stochastic gradient method</em>. Obviously to base our step only on one observation is not necessarily the most intelligent approach. One often uses <em>mini-batches</em> of the training data to update the parameter vector.</p>
+</section>
+</section>
+<section id="back-propagation" class="level2">
+<h2 class="anchored" data-anchor-id="back-propagation">Back propagation</h2>
+<p>This section seeks a way to calculate <span class="math inline">\(\nabla C_i(p)\)</span>. Let us write <span class="math display">\[C=\frac{1}{2}||y-a^{[L]}||_2^2.\]</span> <span class="math inline">\(C\)</span> is a function of the weights and biases via <span class="math inline">\(a^{[L]}\)</span>. Remember that the levels of activation of the neurons are calculated recursively, i.e.&nbsp;<span class="math display">\[a^{[L]}=\sigma(W^{[L]} a^{[L-1]}+b^{[L]})=\sigma (W^{[L]} \sigma(W^{[L-1]} a^{[L-2]}+b^{[L-1]})+b^{[L]})=....\]</span></p>
+<p>Thus, we should spend some time to figure out how to calculate <span class="math display">\[\frac{\partial C}{\partial w_{j,k}^{[l]}}\]</span> and <span class="math display">\[\frac{\partial C}{\partial b_{j}^{[l]}}\]</span> for <span class="math inline">\(l\in\{2,\dots,L\}\)</span> and <span class="math inline">\(j=1,\dots,n_l, k=1,\dots,n_{l-1}\)</span>. Above we have defined <span class="math display">\[z^{[l]}=W^{[l]}a^{[l-1]}+b^{[l]}\]</span> and <span class="math inline">\(a^{]l]}=\sigma(z^{[l]})\)</span>. We define <span class="math display">\[\delta_j^{[l]}=\frac{\partial C}{\partial z_j^{[l]} }\]</span> for <span class="math inline">\(1\leq j\leq n_l\)</span> and <span class="math inline">\(2\leq l\leq L\)</span>. This measures how sensitive the cost function is to changes to the weighted and biased input of neuron <span class="math inline">\(j\)</span> in layer <span class="math inline">\(l\)</span> of the NN. This <span class="math inline">\(\delta\)</span>’s come in handy, when we try to find concise expressions for the partial derivatives of the cost function with respect to weights and biases.</p>
+<dl>
+<dt>Lemma</dt>
+<dd>
+<p>We have \begin{align}\delta^{[L]}&amp;=\sigma’(z^{[L]})\circ (a^L -y),\\ \delta^{[l]} &amp;=\sigma’(z^{[l]})\circ (W^{[l+1]})^T \delta^{[l+1]}\text{ for }2\leq l\leq L-1\\ \frac{\partial C}{\partial b_j^{[l]}} &amp;= \delta_j^{[l]} \text{ for } 2\leq l\leq L\\ \frac{\partial C}{\partial w_{jk}^{[l]}} &amp;= \delta_j^{[l]}a_k^{[l-1]} \text{ for } 2\leq l\leq L\end{align}, where <span class="math inline">\(x\circ y=(x_1y_1,\dots,x_ny_n)^T\)</span> is the Hadamard-product.</p>
+</dd>
+</dl>
+
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-higham2018deep" class="csl-entry" role="listitem">
+Higham, Catherine F., and Desmond J. Higham. 2018. <span>“Deep Learning: An Introduction for Applied Mathematicians.”</span> <a href="https://arxiv.org/abs/1801.05894">https://arxiv.org/abs/1801.05894</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">© Copyright 2024, Florian Greindl</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">Built with <a href="https://quarto.org/">Quarto</a></div>
+  </div>
+</footer>
+
+
+
+</body></html>

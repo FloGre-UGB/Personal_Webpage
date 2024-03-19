@@ -9,6 +9,7 @@ website:
       - href: index.qmd
         text: Home
       - contact.qmd
+      - posts.qmd
     tools:
       - icon: github
         href: https://github.com/FloGre-UGB
